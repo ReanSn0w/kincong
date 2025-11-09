@@ -42,6 +42,24 @@ func (r *Resolver) Resolve(items ...utils.Value) (map[string]utils.ResolvedSubne
 	return result, errMap.HasError()
 }
 
+func (r *Resolver) ResolveByValue(items ...utils.Value) (map[utils.Value][]utils.ResolvedSubnet, error) {
+	var (
+		result = make(map[utils.Value][]utils.ResolvedSubnet)
+		errMap = make(utils.ErrorsMap)
+	)
+
+	for _, item := range items {
+		resolved, err := r.resolveItem(item)
+		if err != nil {
+			errMap[string(item)] = err
+		} else {
+			result[item] = resolved
+		}
+	}
+
+	return result, errMap.HasError()
+}
+
 func (r *Resolver) resolveItem(item utils.Value) ([]utils.ResolvedSubnet, error) {
 	t := r.detectValueType(item)
 	if t == resolverTypeEmpty {
