@@ -48,3 +48,13 @@ func TestASN_Resolve(t *testing.T) {
 		})
 	}
 }
+
+func TestASN_InfoByIP(t *testing.T) {
+	asn := asn.New()
+	result, err := asn.InfoByIP("8.8.8.8")
+	assert.NoError(t, err)
+	if assert.NotNil(t, result) {
+		assert.Equal(t, []string{"15169"}, result.Asns)
+		assert.Equal(t, "8.8.8.0/24", result.Prefix)
+	}
+}

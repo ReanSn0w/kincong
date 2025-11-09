@@ -36,6 +36,17 @@ type (
 		InWhois bool   `json:"in_whois"`
 		Prefix  string `json:"prefix"`
 	}
+
+	ipInfoResponse struct {
+		Data       IPData `json:"data"`
+		Status     string `json:"status"`
+		StatusCode int64  `json:"status_code"`
+	}
+
+	IPData struct {
+		Asns   []string `json:"asns"`
+		Prefix string   `json:"prefix"`
+	}
 )
 
 func New() *Resolver {
@@ -46,19 +57,19 @@ func (r *Resolver) Type() resolver.ResolverType {
 	return resolver.ResolverTypeASN
 }
 
-func (r *Resolver) Resolve(value string) ([]utils.ResolvedSubnet, error) {
-	resp, err := http.Get(fmt.Sprintf("https://stat.ripe.net/data/as-routing-consistency/data.json?resource=%s", value))
+func (r *Resolver) InfoByIP(ip string) (*IPData, error) {
+	var response ipInfoResponse
+	err := r.request(fmt.Sprintf("data/network-info/data.json?resource=%s", ip), &response)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
+	return &response.Data, nil
+}
 
+func (r *Resolver) Resolve(value string) ([]utils.ResolvedSubnet, error) {
 	var responseResult resolveResponse
-	err = json.NewDecoder(resp.Body).Decode(&responseResult)
+	err := r.request(fmt.Sprintf("data/as-routing-consistency/data.json?resource=%s", value), &responseResult)
 	if err != nil {
 		return nil, err
 	}
@@ -77,4 +88,23 @@ func (r *Resolver) Resolve(value string) ([]utils.ResolvedSubnet, error) {
 	}
 
 	return result, nil
+}
+
+func (r *Resolver) request(path string, respBody any) error {
+	resp, err := http.Get(fmt.Sprintf("https://stat.ripe.net/%s", path))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	err = json.NewDecoder(resp.Body).Decode(respBody)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
