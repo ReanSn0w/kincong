@@ -108,8 +108,9 @@ func (c *CR) DomainInfo(domain utils.Value) (*DomainInfo, error) {
 			}
 
 			networkMap[utils.Value(data.Prefix)] = struct{}{}
+
 			for _, asn := range data.Asns {
-				asnMap[utils.Value(asn)] = struct{}{}
+				asnMap[utils.Value("AS"+asn)] = struct{}{}
 			}
 		}
 	}
