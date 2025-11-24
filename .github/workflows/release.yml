@@ -1,4 +1,4 @@
-name: Build and Upload Release Binaries
+name: Build and Upload Release Container
 
 on:
   push:
@@ -22,91 +22,7 @@ jobs:
       - name: Run tests
         run: go test -v ./...
 
-  build:
-    needs: test
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - os: linux
-            arch: amd64
-            output_suffix: linux-amd64
-          - os: linux
-            arch: arm64
-            output_suffix: linux-arm64
-          - os: darwin
-            arch: amd64
-            output_suffix: darwin-amd64
-          - os: darwin
-            arch: arm64
-            output_suffix: darwin-arm64
-          - os: windows
-            arch: amd64
-            output_suffix: windows-amd64.exe
-          - os: windows
-            arch: arm64
-            output_suffix: windows-arm64.exe
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.25.0"
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Build binary
-        env:
-          GOOS: ${{ matrix.os }}
-          GOARCH: ${{ matrix.arch }}
-        run: |
-          go build \
-            -ldflags "-X main.revision=${{ steps.version.outputs.version }}" \
-            -o ./app-${{ matrix.output_suffix }} \
-            ./cmd/app/main.go
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-${{ matrix.output_suffix }}
-          path: ./app-${{ matrix.output_suffix }}
-
-  create-release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./artifacts
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-
-      - name: Create Release and Upload Binaries
-        uses: softprops/action-gh-release@v1
-        with:
-          files: ./artifacts/**/*
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-
-  build-container:
+  publish:
     needs: test
     name: "Build Docker Container"
     if: startsWith(github.ref, 'refs/tags/v')
@@ -136,6 +52,8 @@ jobs:
         with:
           push: true
           context: .
-          file: ./cmd/server/Dockerfile
+          file: ./Dockerfile
           tags: ${{steps.meta.outputs.tags}}
           labels: ${{steps.meta.outputs.labels}}
+          args: |
+            GITHUB_REF=${GITHUB_REF}

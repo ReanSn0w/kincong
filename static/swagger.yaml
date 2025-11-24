@@ -1,0 +1,184 @@
+basePath: /
+definitions:
+  github_com_ReanSn0w_kincong_internal_config.Request:
+    properties:
+      config:
+        type: string
+      rules:
+        items:
+          $ref: '#/definitions/github_com_ReanSn0w_kincong_internal_config.Rule'
+        type: array
+      type:
+        type: string
+    type: object
+  github_com_ReanSn0w_kincong_internal_config.Rule:
+    properties:
+      type:
+        type: string
+      value:
+        type: string
+    type: object
+  internal_server.ResolveRequest:
+    properties:
+      asn:
+        description: Список ASN для разрешения
+        example:
+        - AS12345
+        items:
+          type: string
+        type: array
+      domain:
+        description: Список доменных имен для разрешения
+        example:
+        - google.com
+        items:
+          type: string
+        type: array
+      ip:
+        description: Список IP адресов для разрешения
+        example:
+        - 8.8.8.8
+        items:
+          type: string
+        type: array
+    type: object
+  internal_server.ResolveResponse:
+    properties:
+      data:
+        $ref: '#/definitions/internal_server.ResolveResponseData'
+      message: {}
+      success:
+        type: boolean
+    type: object
+  internal_server.ResolveResponseData:
+    additionalProperties:
+      items:
+        type: string
+      type: array
+    type: object
+  internal_server.ResponseError:
+    properties:
+      data:
+        type: string
+      message: {}
+      success:
+        type: boolean
+    type: object
+  internal_server.ValueRequest:
+    properties:
+      value:
+        example: google.com
+        type: string
+    type: object
+  internal_server.ValueResponse:
+    properties:
+      data:
+        $ref: '#/definitions/internal_server.ValueResponseData'
+      message: {}
+      success:
+        type: boolean
+    type: object
+  internal_server.ValueResponseData:
+    properties:
+      asn:
+        items:
+          type: string
+        type: array
+      domains:
+        items:
+          type: string
+        type: array
+      networks:
+        items:
+          type: string
+        type: array
+    type: object
+host: localhost
+info:
+  contact: {}
+  description: API для получения подсетей на основе IP адресов, доменов и ASN
+  title: Kincong Resolver Rest Server
+  version: debug
+paths:
+  /modify-config:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Метод принимает текущую конфигурацию и модифицирует
+        ее на основе переданных правил
+      parameters:
+      - description: Параметры запроса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_ReanSn0w_kincong_internal_config.Request'
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              format: int32
+              type: integer
+            type: array
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/internal_server.ResponseError'
+      summary: Модификация конфигурации
+  /resolve:
+    post:
+      consumes:
+      - application/json
+      description: Метод возвращает пользователю список доступных в системе документов
+      parameters:
+      - description: Параметры запроса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_server.ResolveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_server.ResolveResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/internal_server.ResponseError'
+      summary: Получение списка подсетей
+  /value:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Метод возвращает массивы IP, Подсетей и ASN записей
+        связанных с указанным значением
+      parameters:
+      - description: Параметры запроса
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_server.ValueRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_server.ValueResponse'
+        default:
+          description: ""
+          schema:
+            $ref: '#/definitions/internal_server.ResponseError'
+      summary: Получение информации о значении
+schemes:
+- http
+swagger: "2.0"

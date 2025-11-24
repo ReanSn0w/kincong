@@ -9,7 +9,7 @@ RUN apk --no-cache add ca-certificates
 RUN \
     echo "Building service documentation." && \
     GOPRIVATE=https://git.papkovda.ru go install github.com/swaggo/swag/cmd/swag@latest && \
-    swag init -g ./cmd/server/rest/rest.go --parseVendor -ot yaml -pd
+    swag init -g ./internal/server/api.go --parseVendor -ot yaml -pd
 
 RUN \
     version=${GITHUB_REF} && \

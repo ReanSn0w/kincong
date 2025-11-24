@@ -27,3 +27,4 @@ cmd/app/config.yaml
 config.yaml
 run.env
 *.env
+__debug_*
