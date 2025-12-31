@@ -21,6 +21,7 @@ FROM scratch
 
 COPY --from=application /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=application /srv /srv
+COPY --from=application /bundle/static /srv/static
 COPY --from=application /bundle/docs/swagger.yaml /srv/static/swagger.yaml
 
 ENV PORT=8080
