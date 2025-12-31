@@ -1,0 +1,117 @@
+{{define "app"}}
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Kincong - Конфигуратор статических маршрутов Keenetic</title>
+
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css"
+        />
+
+        <style>
+            .form-value {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
+
+            input[type="hidden"] {
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header class="container">
+            <h1>Kincong</h1>
+            <p>Конфигуратор статческих маршрутов для роутеров Keenetic</p>
+        </header>
+
+        <hr />
+
+        <section class="container">
+            <h2>Настройка маршрутов</h2>
+
+            <div>
+                <input
+                    name="query"
+                    placeholder="youtube.com"
+                    hx-post="./htmx/update-query"
+                    hx-target=".query-result"
+                    hx-trigger="input changed delay:500ms"
+                />
+                <div class="query-result"></div>
+            </div>
+        </section>
+
+        <section class="container">
+            <h2>Итоговая конфигурация</h2>
+
+            <form action="./htmx/generate-config" method="POST">
+                <div class="config-items"></div>
+
+                <select name="route_option">
+                    <option value="bat">Windows bat файл</option>
+                    <option value="plain">Простой список</option>
+                </select>
+
+                <button action="submit">Получить</button>
+            </form>
+        </section>
+
+        <hr />
+
+        <footer class="container">
+            <ul>
+                <li><a href="./docs/">API Документация</a></li>
+                <li>
+                    <a href="https://github.com/ReanSn0w/kincong"
+                        >Github репозиторий</a
+                    >
+                </li>
+                <li>
+                    <a href="https://github.com/ReanSn0w"
+                        >Автор: Dmitriy Papkov</a
+                    >
+                </li>
+            </ul>
+        </footer>
+
+        <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    </body>
+</html>
+{{end}} {{define "add-item-array"}} {{range .}} {{template "add-item" .}}
+{{end}} {{end}} {{define "add-item"}}
+<article class="form-value">
+    <p>{{.Input}} > {{.Type}}: <b>{{.Output}}</b></p>
+
+    <button
+        hx-post="./htmx/add-config-item?input={{.Input}}&type={{.Type}}&output={{.Output}}"
+        hx-trigger="click"
+        hx-target=".config-items"
+        hx-swap="beforeend"
+    >
+        Добавить
+    </button>
+</article>
+{{end}} {{define "delete-item"}}
+<article class="form-value">
+    <p>{{.Input}} > {{.Type}}: <b>{{.Output}}</b></p>
+    <input type="hidden" name="{{.Type}}" value="{{.Output}}" />
+
+    <button
+        type="button"
+        class="secondary"
+        hx-delete="./htmx/remove-config-item"
+        hx-trigger="click"
+        hx-target="closest article"
+        hx-swap="outerHTML swap:0.3s"
+        hx-confirm="Вы уверены, что хотите удалить правило [{{.Type}}] {{.Output}} для {{.Input}}?"
+    >
+        Удалить
+    </button>
+</article>
+{{end}}

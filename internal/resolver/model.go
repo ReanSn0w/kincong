@@ -15,3 +15,8 @@ type ResolverItem interface {
 	Type() ResolverType
 	Resolve(string) ([]utils.ResolvedSubnet, error)
 }
+
+type IPData struct {
+	Asns   []string `json:"asns"`
+	Prefix string   `json:"prefix"`
+}

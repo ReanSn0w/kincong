@@ -38,14 +38,9 @@ type (
 	}
 
 	ipInfoResponse struct {
-		Data       IPData `json:"data"`
-		Status     string `json:"status"`
-		StatusCode int64  `json:"status_code"`
-	}
-
-	IPData struct {
-		Asns   []string `json:"asns"`
-		Prefix string   `json:"prefix"`
+		Data       resolver.IPData `json:"data"`
+		Status     string          `json:"status"`
+		StatusCode int64           `json:"status_code"`
 	}
 )
 
@@ -57,7 +52,7 @@ func (r *Resolver) Type() resolver.ResolverType {
 	return resolver.ResolverTypeASN
 }
 
-func (r *Resolver) InfoByIP(ip string) (*IPData, error) {
+func (r *Resolver) InfoByIP(ip string) (*resolver.IPData, error) {
 	var response ipInfoResponse
 	err := r.request(fmt.Sprintf("data/network-info/data.json?resource=%s", ip), &response)
 	if err != nil {
