@@ -173,6 +173,10 @@ func (s *Server) htmxGenerateConfigHandler(w http.ResponseWriter, r *http.Reques
 		buffer := new(bytes.Buffer)
 
 		for _, value := range subnets {
+			if value.IsIPv6() {
+				continue
+			}
+
 			ip, ok := value.IP()
 			if !ok {
 				continue
@@ -183,7 +187,7 @@ func (s *Server) htmxGenerateConfigHandler(w http.ResponseWriter, r *http.Reques
 				continue
 			}
 
-			fmt.Fprintf(buffer, "route ADD %s MASK %s\n", ip, mask)
+			fmt.Fprintf(buffer, "route ADD %s MASK %s 0.0.0.0\n", ip, mask)
 		}
 
 		w.Header().Set("Content-Disposition", `attachment; filename="result.bat"`)

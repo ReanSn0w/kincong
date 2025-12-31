@@ -50,6 +50,15 @@ func (r ResolvedSubnet) IP() (string, bool) {
 	return ipValue.String(), true
 }
 
+// Проверка на то, что значение относится к IPv6
+func (r ResolvedSubnet) IsIPv6() bool {
+	ipValue, _, err := net.ParseCIDR(string(r))
+	if err != nil {
+		return false
+	}
+	return ipValue.To4() == nil
+}
+
 // Mask возвращает маску в формате IP адреса
 func (r ResolvedSubnet) Mask() (string, bool) {
 	_, ipnet, err := net.ParseCIDR(string(r))
