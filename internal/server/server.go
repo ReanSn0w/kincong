@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"fmt"
@@ -169,6 +170,68 @@ func (s *Server) htmxGenerateConfigHandler(w http.ResponseWriter, r *http.Reques
 	})
 
 	switch r.FormValue("route_option") {
+	case "bat_zip_500":
+		const recordsPerFile = 500
+		zipBuffer := new(bytes.Buffer)
+		zipWriter := zip.NewWriter(zipBuffer)
+		defer zipWriter.Close()
+
+		fileIndex := 1
+		recordCount := 0
+		var currentBuffer *bytes.Buffer
+
+		// Вспомогательная функция для сохранения файла в ZIP
+		saveCurrentFile := func() error {
+			if currentBuffer == nil || recordCount == 0 {
+				return nil
+			}
+			fileName := fmt.Sprintf("routes_%d.bat", fileIndex)
+			w, err := zipWriter.Create(fileName)
+			if err != nil {
+				return err
+			}
+			_, err = w.Write(currentBuffer.Bytes())
+			return err
+		}
+
+		for _, value := range subnets {
+			if value.IsIPv6() {
+				continue
+			}
+
+			ip, ok := value.IP()
+			if !ok {
+				continue
+			}
+
+			mask, ok := value.Mask()
+			if !ok {
+				continue
+			}
+
+			// Создаём новый файл если достигли лимита
+			if recordCount >= recordsPerFile {
+				saveCurrentFile()
+				fileIndex++
+				currentBuffer = nil
+				recordCount = 0
+			}
+
+			// Инициализируем буфер если это первая запись в файле
+			if currentBuffer == nil {
+				currentBuffer = new(bytes.Buffer)
+			}
+
+			fmt.Fprintf(currentBuffer, "route ADD %s MASK %s 0.0.0.0\n", ip, mask)
+			recordCount++
+		}
+
+		// Сохраняем последний файл
+		saveCurrentFile()
+
+		w.Header().Set("Content-Disposition", `attachment; filename="routes.zip"`)
+		w.Header().Set("Content-Type", "application/zip")
+		http.ServeContent(w, r, "routes.zip", time.Now(), bytes.NewReader(zipBuffer.Bytes()))
 	case "bat":
 		buffer := new(bytes.Buffer)
 
